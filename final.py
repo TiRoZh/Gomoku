@@ -9,7 +9,7 @@ class Gomoku:
 
     def get_state(self):
         return self.game_state
-    
+
     def set_state(self, state):
         self.game_state = state
 
@@ -44,13 +44,13 @@ class State:
         self.p1_pieces = p1_pieces
         self.p2_pieces = p2_pieces
         self.value = (self.calculate_value(p2_pieces)) - (self.calculate_value(p1_pieces))
-    
+
     def get_value(self):
         return self.value
-        
+
     def calculate_value(self, pieces_set):
         scores = [[], [], [], []]
-                        
+
         for piece in pieces_set:
             for i in range(2,6):
                 if (check_vertical(pieces_set, piece, i) or
@@ -58,25 +58,31 @@ class State:
                     check_diagonal_left(pieces_set, i) or
                     check_diagonal_right(pieces_set, i)):
                     scores[i-2].append(piece)
-        
+
         score = ((10 * len(scores[0])) + (40 * len(scores[1])) +
                  (200 * len(scores[2])) + (500 * len(scores[3])))
         return score
-                    
+
 
     def add_piece(self, coords):
-        if self.turn:
-            self.p1_pieces.append(coords)
+        if self.board[coords[1]-1][coords[0]-1] == None:
+
+            if self.turn:
+                self.p1_pieces.append(coords)
+            else:
+                self.p2_pieces.append(coords)
+
+            # we entered coordinates as (x,y)
+            # but the board is [y][x]
+            self.board[coords[1]-1][coords[0]-1] = self.turn
+
+            self.turn = not self.turn
+
+            return State(self.board, self.p1_pieces, self.p2_pieces, self.turn)
         else:
-            self.p2_pieces.append(coords)
+            print("The coordinates you have entered either do not exist or are used")
 
-        # we entered coordinates as (x,y)
-        # but the board is [y][x]
-        self.board[coords[1]-1][coords[0]-1] = self.turn
-
-        self.turn = not self.turn
-
-        return State(self.board, self.p1_pieces, self.p2_pieces, self.turn)
+        return None
 
 
     def get_pieces(self):
@@ -102,10 +108,10 @@ class State:
         # we have a piece as a tuple (x,y)
         if piece in self.p1_pieces:
             return (check_vertical(self.p1_pieces,piece,5) or check_horizontal(self.p1_pieces,piece,5)
-            or check_diagonal_left(self.p1_pieces,5) or check_diagonal_right(self.p1_pieces,5) )
+            or check_diagonal_left(self.p1_pieces,5,piece) or check_diagonal_right(self.p1_pieces,5,piece) )
         else:
             return (check_vertical(self.p2_pieces,piece,5) or check_horizontal(self.p2_pieces,piece,5)
-            or check_diagonal_left(self.p2_pieces,5) or check_diagonal_right(self.p2_pieces,5))
+            or check_diagonal_left(self.p2_pieces,5,piece) or check_diagonal_right(self.p2_pieces,5,piece))
 
 
 def successor(state):
@@ -189,19 +195,23 @@ def check_vertical(player,piece,amount_check):
     return (s(y_coords)>=amount_check)
 
 
-def check_diagonal_right(player,amount_check):
-    #name are misleading, since the coordinates towards teh right are always
-    #the same, i dont need to keep track of the y coordinates, too lazy to change variable name
+def check_diagonal_right(player,amount_check,piece):
     x_cord=0
+    y_cord=0
+    if piece[1]>piece[0]:
+        x_cord=piece[0]-piece[1]
+    if piece[0]>piece[1]:
+        y_cord=piece[1]-piece[0]
     in_a_row=0
-    while x_cord<15:
-        if ((x_cord,x_cord) in player):
+    while x_cord<15 and y_cord<15:
+        if ((x_cord,y_cord) in player):
             in_a_row+=1
             if in_a_row==amount_check:
                 return True
         else:
             in_a_row=0
         x_cord+=1
+        y_cord+=1
     return False
 
 #follows the same concept as check_diagonal_right
@@ -209,11 +219,17 @@ def check_diagonal_right(player,amount_check):
 #so i could check from bottom left to top right(which is what I did)
 #or top right to bottom left
 #I went from (0,14) to (14,0)
-def check_diagonal_left(player,amount_check):
+def check_diagonal_left(player,amount_check,piece):
     x_cord=0
     y_cord=14
+    if (piece[0]+piece[1])>14:
+        y_abs=abs(piece[1]-14)
+        x_cord=piece[0]-y_abs
+        y_cord=piece[1]+y_abs
+    if (piece[0]+piece[1])<14:
+        y_cord=piece[1]-piece[0]
     in_a_row=0
-    while x_cord<15:
+    while x_cord<15 and y_cord<15:
         if ((x_cord,y_cord) in player):
             in_a_row+=1
             if in_a_row==amount_check:
