@@ -59,8 +59,8 @@ class State:
                     check_diagonal_right(pieces_set, i)):
                     scores[i-2].append(piece)
         
-        score = ((10 * len(scores[0])) + (25 * len(scores[1])) +
-                 (50 * len(scores[2])) + (100 * len(scores[3])))
+        score = ((10 * len(scores[0])) + (40 * len(scores[1])) +
+                 (200 * len(scores[2])) + (500 * len(scores[3])))
         return score
                     
 
